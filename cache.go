@@ -6,7 +6,7 @@ import (
 )
 
 type Data struct {
-	Value    string
+	value    string
 	deadline *time.Time
 }
 
@@ -33,7 +33,7 @@ func (cache *Cache) Get(key string) (string, bool) {
 		return "", false
 	}
 
-	return cache.data[key].Value, true
+	return cache.data[key].value, true
 }
 
 func (cache *Cache) Put(key, value string) {
