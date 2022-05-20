@@ -16,18 +16,24 @@ type Cache struct {
 }
 
 func NewCache() Cache {
-	return Cache{}
+	return Cache{
+		data: map[string]Data{},
+	}
 }
 
 func (cache *Cache) Get(key string) (string, bool) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
-	if val, ok := cache.data[key]; ok && cache.data[key].deadline.After(time.Now()) {
-		return val.Value, true
+	if _, ok := cache.data[key]; !ok {
+		return "", false
 	}
 
-	return "", false
+	if cache.data[key].deadline != nil && cache.data[key].deadline.Before(time.Now()) {
+		return "", false
+	}
+
+	return cache.data[key].Value, true
 }
 
 func (cache *Cache) Put(key, value string) {
@@ -41,13 +47,15 @@ func (cache *Cache) Keys() []string {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
-	keys := make([]string, len(cache.data))
+	var keys []string
 	now := time.Now()
 
 	for k, v := range cache.data {
-		if v.deadline.After(now) {
-			keys = append(keys, k)
+		if v.deadline != nil && v.deadline.Before(now) {
+			continue
 		}
+
+		keys = append(keys, k)
 	}
 
 	return keys
